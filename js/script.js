@@ -43,25 +43,26 @@ screen.onmousedown = function (e) {
 screen.onmouseup = function (e) {
     pencil.isDrawing = false;
     setTimeout(transformLinesToCircle, 2000);
-    
 }
 
 screen.onmousemove = function (e) {
+    pencil.moving = true;
     if (pencil.isDrawing) {
         const {left, top} = screen.getBoundingClientRect();
         pencil.pos.x = e.clientX - left;
         pencil.pos.y = e.clientY - top;
         if (pencil.moving) {
-            const line = {
+            let line = {
                 prePos: { ...pencil.prePos },
                 pos: { ...pencil.pos }
             };
             drawLine(line);
             lines.push(line);
         }
-        pencil.prePos = { ...pencil.pos };
-        pencil.moving = true;
+        
+        
     }
+    pencil.prePos = { ...pencil.pos };
 }
 
 function drawLine(line) {
@@ -94,7 +95,9 @@ function transformLinesToCircle() {
 }
 
 function animateLinesToCircle(center, radius, angle, angleIncrement) {
-    context.clearRect(0, 0, screen.width, screen.height); // Clear the canvas
+    context.arc(center.x, center.y, radius+20, 0, 2 * Math.PI); // Draw the circle (filled)
+    context.fillStyle = 'rgba(255, 255, 255, 1)';
+    context.fill();
     let isAnimationComplete = true;
 
     context.beginPath();  // Begin a new path for the circle
@@ -104,13 +107,13 @@ function animateLinesToCircle(center, radius, angle, angleIncrement) {
         const targetY = center.y + radius * Math.sin(angle + index * angleIncrement);
 
         // Check if the line has reached close enough to the target position
-        if (Math.abs(line.pos.x - targetX) > 0.5 || Math.abs(line.pos.y - targetY) > 0.5) {
+        if (Math.abs(line.pos.x - targetX) > 0.01 || Math.abs(line.pos.y - targetY) > 0.01) {
             isAnimationComplete = false;
         }
 
         // Interpolate current position towards the target position
-        line.pos.x += (targetX - line.pos.x) * 0.01;
-        line.pos.y += (targetY - line.pos.y) * 0.01;
+        line.pos.x += (targetX - line.pos.x) * 0.1;
+        line.pos.y += (targetY - line.pos.y) * 0.1;
 
         // If it's the first point, move to it without drawing a line
         if (index === 0) {
@@ -134,8 +137,10 @@ function redrawFinalCircle() {
     lines.forEach((line, index) => {
         if (index === 0) {
             context.moveTo(line.pos.x, line.pos.y);
+            lines.push(line);
         } else {
             context.lineTo(line.pos.x, line.pos.y);
+            lines.push(line);
         }
     });
     context.closePath();
